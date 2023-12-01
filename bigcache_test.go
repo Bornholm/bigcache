@@ -168,7 +168,7 @@ func TestAppendCollision(t *testing.T) {
 
 	// then
 	noError(t, err)
-	assertEqual(t, cache.Stats().Collisions, int64(1))
+	assertEqual(t, cache.Stats().Collisions(), int64(1))
 	cachedValue, err = cache.Get("b")
 	noError(t, err)
 	assertEqual(t, []byte("2"), cachedValue)
@@ -641,10 +641,10 @@ func TestCacheStats(t *testing.T) {
 
 	// then
 	stats := cache.Stats()
-	assertEqual(t, stats.Hits, int64(10))
-	assertEqual(t, stats.Misses, int64(10))
-	assertEqual(t, stats.DelHits, int64(10))
-	assertEqual(t, stats.DelMisses, int64(10))
+	assertEqual(t, stats.Hits(), int64(10))
+	assertEqual(t, stats.Misses(), int64(10))
+	assertEqual(t, stats.DelHits(), int64(10))
+	assertEqual(t, stats.DelMisses(), int64(10))
 }
 func TestCacheEntryStats(t *testing.T) {
 	t.Parallel()
@@ -705,18 +705,18 @@ func TestCacheRestStats(t *testing.T) {
 	}
 
 	stats := cache.Stats()
-	assertEqual(t, stats.Hits, int64(10))
-	assertEqual(t, stats.Misses, int64(10))
-	assertEqual(t, stats.DelHits, int64(10))
-	assertEqual(t, stats.DelMisses, int64(10))
+	assertEqual(t, stats.Hits(), int64(10))
+	assertEqual(t, stats.Misses(), int64(10))
+	assertEqual(t, stats.DelHits(), int64(10))
+	assertEqual(t, stats.DelMisses(), int64(10))
 
 	//then
 	cache.ResetStats()
 	stats = cache.Stats()
-	assertEqual(t, stats.Hits, int64(0))
-	assertEqual(t, stats.Misses, int64(0))
-	assertEqual(t, stats.DelHits, int64(0))
-	assertEqual(t, stats.DelMisses, int64(0))
+	assertEqual(t, stats.Hits(), int64(0))
+	assertEqual(t, stats.Misses(), int64(0))
+	assertEqual(t, stats.DelHits(), int64(0))
+	assertEqual(t, stats.DelMisses(), int64(0))
 }
 
 func TestCacheDel(t *testing.T) {
@@ -832,7 +832,7 @@ func TestWriteAndReadParallelSameKeyWithStats(t *testing.T) {
 
 	wg.Wait()
 
-	assertEqual(t, Stats{Hits: int64(n * ntest)}, cache.Stats())
+	assertEqual(t, NewStats(int64(n*ntest), 0, 0, 0, 0), cache.Stats())
 	assertEqual(t, ntest*n, int(cache.KeyMetadata(key).RequestCount))
 }
 
@@ -1056,7 +1056,7 @@ func TestHashCollision(t *testing.T) {
 	assertEqual(t, []byte(nil), cachedValue)
 
 	assertEqual(t, "Collision detected. Both %q and %q have the same hash %x", ml.lastFormat)
-	assertEqual(t, cache.Stats().Collisions, int64(1))
+	assertEqual(t, cache.Stats().Collisions(), int64(1))
 }
 
 func TestNilValueCaching(t *testing.T) {
@@ -1137,7 +1137,7 @@ func TestEntryNotPresent(t *testing.T) {
 	value, resp, err := cache.GetWithInfo("blah")
 	assertEqual(t, ErrEntryNotFound, err)
 	assertEqual(t, resp.EntryStatus, RemoveReason(0))
-	assertEqual(t, cache.Stats().Misses, int64(1))
+	assertEqual(t, cache.Stats().Misses(), int64(1))
 	assertEqual(t, []byte(nil), value)
 }
 
@@ -1230,7 +1230,7 @@ func TestBigCache_GetWithInfoCollision(t *testing.T) {
 	assertEqual(t, []byte(nil), cachedValue)
 	assertEqual(t, Response{}, resp)
 	assertEqual(t, ErrEntryNotFound, err)
-	assertEqual(t, cache.Stats().Collisions, int64(1))
+	assertEqual(t, cache.Stats().Collisions(), int64(1))
 
 }
 

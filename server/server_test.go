@@ -182,7 +182,7 @@ func TestClearCache(t *testing.T) {
 }
 func TestGetStats(t *testing.T) {
 	t.Parallel()
-	var testStats bigcache.Stats
+	testStats := bigcache.NewStats(0, 0, 0, 0, 0)
 
 	req := httptest.NewRequest("GET", testBaseString+"/api/v1/stats", nil)
 	rr := httptest.NewRecorder()
@@ -203,14 +203,14 @@ func TestGetStats(t *testing.T) {
 		t.Errorf("error decoding cache stats. error: %s", err)
 	}
 
-	if testStats.Hits == 0 {
+	if testStats.Hits() == 0 {
 		t.Errorf("want: > 0; got: 0.\n\thandler not properly returning stats info.")
 	}
 }
 
 func TestGetStatsIndex(t *testing.T) {
 	t.Parallel()
-	var testStats bigcache.Stats
+	testStats := bigcache.NewStats(0, 0, 0, 0, 0)
 
 	getreq := httptest.NewRequest("GET", testBaseString+"/api/v1/stats", nil)
 	putreq := httptest.NewRequest("PUT", testBaseString+"/api/v1/stats", nil)
@@ -229,11 +229,11 @@ func TestGetStatsIndex(t *testing.T) {
 	testHandlers.ServeHTTP(rr, getreq)
 	resp := rr.Result()
 
-	if err := json.NewDecoder(resp.Body).Decode(&testStats); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(testStats); err != nil {
 		t.Errorf("error decoding cache stats. error: %s", err)
 	}
 
-	if testStats.Hits == 0 {
+	if testStats.Hits() == 0 {
 		t.Errorf("want: > 0; got: 0.\n\thandler not properly returning stats info.")
 	}
 

@@ -209,15 +209,15 @@ func (c *BigCache) Capacity() int {
 }
 
 // Stats returns cache's statistics
-func (c *BigCache) Stats() Stats {
-	var s Stats
+func (c *BigCache) Stats() *Stats {
+	s := NewStats(0, 0, 0, 0, 0)
 	for _, shard := range c.shards {
 		tmp := shard.getStats()
-		s.Hits += tmp.Hits
-		s.Misses += tmp.Misses
-		s.DelHits += tmp.DelHits
-		s.DelMisses += tmp.DelMisses
-		s.Collisions += tmp.Collisions
+		s.AddHits(tmp.Hits())
+		s.AddMisses(tmp.Misses())
+		s.AddDelHits(tmp.DelHits())
+		s.AddDelMisses(tmp.DelMisses())
+		s.AddCollisions(tmp.Collisions())
 	}
 	return s
 }

@@ -3,7 +3,6 @@ package bigcache
 import (
 	"errors"
 	"sync"
-	"sync/atomic"
 
 	"github.com/allegro/bigcache/v3/queue"
 )
@@ -29,7 +28,7 @@ type cacheShard struct {
 	lifeWindow   uint64
 
 	hashmapStats map[uint64]uint32
-	stats        Stats
+	stats        *Stats
 	cleanEnabled bool
 }
 
@@ -355,7 +354,7 @@ func (s *cacheShard) reset(config Config) {
 
 func (s *cacheShard) resetStats() {
 	s.lock.Lock()
-	s.stats = Stats{}
+	s.stats = NewStats(0, 0, 0, 0, 0)
 	s.lock.Unlock()
 }
 
@@ -373,15 +372,8 @@ func (s *cacheShard) capacity() int {
 	return res
 }
 
-func (s *cacheShard) getStats() Stats {
-	var stats = Stats{
-		Hits:       atomic.LoadInt64(&s.stats.Hits),
-		Misses:     atomic.LoadInt64(&s.stats.Misses),
-		DelHits:    atomic.LoadInt64(&s.stats.DelHits),
-		DelMisses:  atomic.LoadInt64(&s.stats.DelMisses),
-		Collisions: atomic.LoadInt64(&s.stats.Collisions),
-	}
-	return stats
+func (s *cacheShard) getStats() *Stats {
+	return s.stats.Copy()
 }
 
 func (s *cacheShard) getKeyMetadataWithLock(key uint64) Metadata {
@@ -400,7 +392,7 @@ func (s *cacheShard) getKeyMetadata(key uint64) Metadata {
 }
 
 func (s *cacheShard) hit(key uint64) {
-	atomic.AddInt64(&s.stats.Hits, 1)
+	s.stats.AddHits(1)
 	if s.statsEnabled {
 		s.lock.Lock()
 		s.hashmapStats[key]++
@@ -409,26 +401,26 @@ func (s *cacheShard) hit(key uint64) {
 }
 
 func (s *cacheShard) hitWithoutLock(key uint64) {
-	atomic.AddInt64(&s.stats.Hits, 1)
+	s.stats.AddHits(1)
 	if s.statsEnabled {
 		s.hashmapStats[key]++
 	}
 }
 
 func (s *cacheShard) miss() {
-	atomic.AddInt64(&s.stats.Misses, 1)
+	s.stats.AddMisses(1)
 }
 
 func (s *cacheShard) delhit() {
-	atomic.AddInt64(&s.stats.DelHits, 1)
+	s.stats.AddDelHits(1)
 }
 
 func (s *cacheShard) delmiss() {
-	atomic.AddInt64(&s.stats.DelMisses, 1)
+	s.stats.AddDelMisses(1)
 }
 
 func (s *cacheShard) collision() {
-	atomic.AddInt64(&s.stats.Collisions, 1)
+	s.stats.AddCollisions(1)
 }
 
 func initNewShard(config Config, callback onRemoveCallback, clock clock) *cacheShard {
@@ -450,5 +442,6 @@ func initNewShard(config Config, callback onRemoveCallback, clock clock) *cacheS
 		lifeWindow:   uint64(config.LifeWindow.Seconds()),
 		statsEnabled: config.StatsEnabled,
 		cleanEnabled: config.CleanWindow > 0,
+		stats:        NewStats(0, 0, 0, 0, 0),
 	}
 }
